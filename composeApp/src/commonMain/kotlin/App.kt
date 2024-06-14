@@ -28,7 +28,12 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -36,6 +41,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.unit.dp
@@ -44,6 +50,7 @@ import composablelightbulb.composeapp.generated.resources.Res
 import composablelightbulb.composeapp.generated.resources.bulb_off
 import composablelightbulb.composeapp.generated.resources.bulb_on
 import composablelightbulb.composeapp.generated.resources.bulb_output
+import composablelightbulb.composeapp.generated.resources.bulb_switcher
 import composablelightbulb.composeapp.generated.resources.compose_multiplatform
 import composablelightbulb.composeapp.generated.resources.light_bulb
 import kotlinx.coroutines.delay
@@ -55,6 +62,11 @@ import kotlin.math.sin
 @Composable
 @Preview
 fun App() {
+    BulbSwitcher()
+}
+
+@Composable
+private fun BulbSwitcher() {
     var touchPosition by remember { mutableStateOf(Offset(100f, 100f)) }
     var isTouching by remember { mutableStateOf(false) }
     val bulbCenterX = remember { 100f }
@@ -109,27 +121,34 @@ fun App() {
         }
     }
 
-    MaterialTheme {
-        Column(modifier = Modifier.fillMaxSize()) {
-            Image(painterResource(Res.drawable.bulb_output), contentDescription = null, modifier = Modifier)
-            Canvas(modifier = Modifier.weight(1f)
-                .fillMaxWidth().background(Color.Red)
+    MaterialTheme
+        Column(modifier = Modifier.fillMaxSize().background(color = Color(0xFF29363e)),
+            horizontalAlignment = Alignment.End) {
+            Spacer(Modifier.height(20.dp))
+            Image(
+                painterResource(Res.drawable.bulb_switcher),
+                contentDescription = null,
+                modifier = Modifier.graphicsLayer {
+                    translationY = 18f
+                }
+            )
+            Canvas(modifier = Modifier.weight(1f).size(width = 100.dp, height = 50.dp)
                 .pointerInput(Unit) {
                     forEachGesture {
-                    awaitPointerEventScope {
-                        val down = awaitFirstDown(requireUnconsumed = false)
-                        // Check if the touch down is close enough to the endpoint of the string.
-                        if (abs(down.position.x - endPoint.value.x) <= 50f && abs(down.position.y - endPoint.value.y) <= 50f) {
-                            touchPosition = down.position
-                            isTouching = true
-                            do {
-                                val event = awaitPointerEvent()
-                                touchPosition = event.changes.first().position
-                            } while (event.changes.any { it.pressed })
-                            isTouching = false
+                        awaitPointerEventScope {
+                            val down = awaitFirstDown(requireUnconsumed = false)
+                            // Check if the touch down is close enough to the endpoint of the string.
+                            if (abs(down.position.x - endPoint.value.x) <= 50f && abs(down.position.y - endPoint.value.y) <= 50f) {
+                                touchPosition = down.position
+                                isTouching = true
+                                do {
+                                    val event = awaitPointerEvent()
+                                    touchPosition = event.changes.first().position
+                                } while (event.changes.any { it.pressed })
+                                isTouching = false
+                            }
                         }
                     }
-                }
                 }) {
                 val path = Path().apply {
                     moveTo(bulbCenterX, 0f)
@@ -159,7 +178,7 @@ fun App() {
             }
         }
     }
-}
+
 
 fun Offset.distanceTo(other: Offset): Float {
     val dx = x - other.x
